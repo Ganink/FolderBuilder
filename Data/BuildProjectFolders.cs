@@ -18,43 +18,73 @@ using System.IO;
 
 #if UNITY_EDITOR
 
-public class BuildProjectFolders : ScriptableWizard {
-
+public class BuildProjectFolders : ScriptableWizard
+{
     public bool IncludeDataFolder = false;
-    public List<string> folders = new List<string>() { "Manager" };
-    [MenuItem("SadGames/Tools/Create Manager")]
+    public bool IncludePrefabsFolder = false;
+    public bool IncludeScriptableObjectFolder = false;
+    public string Manager = "NewManager" ;
+    [MenuItem("Greenvillex/Tools/Create Manager")]
 
-    static void CreateWizard() {
+    static void CreateWizard()
+    {
         ScriptableWizard.DisplayWizard("Create Project Folders", typeof(BuildProjectFolders), "Create");
     }
 
     //Called when the window first appears
-    void OnEnable() {
+    void OnEnable()
+    {
     }
     //Create button click
-    void OnWizardCreate() {
+    void OnWizardCreate()
+    {
+        string guid = AssetDatabase.CreateFolder("Assets/[Code]", Manager);
+        string newFolderPath = AssetDatabase.GUIDToAssetPath(guid);
+        if (IncludeDataFolder)
+        {
+            string dataFolderGUID = AssetDatabase.CreateFolder($"{newFolderPath}", "Data");
+            string newFolderPathData = AssetDatabase.GUIDToAssetPath(dataFolderGUID);
 
-        //create all the folders required in a project
-        //primary and sub folders
-        foreach (string folder in folders) {
-            string guid = AssetDatabase.CreateFolder("Assets", folder);
-            string newFolderPath = AssetDatabase.GUIDToAssetPath(guid);
-            if (IncludeDataFolder) {
-                string dataFolderGUID = AssetDatabase.CreateFolder($"{newFolderPath}", "Data");
-                string newFolderPathData = AssetDatabase.GUIDToAssetPath(dataFolderGUID);
+            string fileName = newFolderPathData + $"/{Manager}.cs";
+            var textManager = RegisterScript(Manager);
+            File.WriteAllText(fileName, textManager);
+        }
+        if (IncludePrefabsFolder)
+        {
+            string dataFolderGUID = AssetDatabase.CreateFolder($"{newFolderPath}", "Prefabs");
+            string newFolderPathData = AssetDatabase.GUIDToAssetPath(dataFolderGUID);
+        }
+        if (IncludeScriptableObjectFolder)
+        {
+            string dataFolderGUID = AssetDatabase.CreateFolder($"{newFolderPath}", "ScriptableObject");
+            string newFolderPathData = AssetDatabase.GUIDToAssetPath(dataFolderGUID);
 
-
-                string fileName = newFolderPathData + $"/{folder}.cs";
-                var textManager = RegisterScript(folder);
-                File.WriteAllText(fileName, textManager);
-            }
+            string fileName = newFolderPathData + $"/{Manager}.cs";
+            var textManager = RegisterScriptableObject(Manager);
+            File.WriteAllText(fileName, textManager);
         }
 
         AssetDatabase.Refresh();
     }
 
-    string RegisterScript(string manager) {
-        string newScript = "using UnityEngine; public class " + manager + " : MonoBehaviour {}";
+    string RegisterScript(string manager)
+    {
+        string newScript = 
+            "using UnityEngine; " +
+            "\npublic class " + manager + " : MonoBehaviour " +
+            "\n{" +
+            "\n}";
+        return newScript;
+    }
+
+    string RegisterScriptableObject(string manager)
+    {
+        string newScript = 
+            $"using UnityEngine; " +
+            $"\n[CreateAssetMenu(menuName = {'"'}Greenvillex/{manager}SO{'"'})] " +
+            $"\npublic class {manager}SO : ScriptableObject" +
+            $"\n{'{'} " +
+            $"\n{'}'} ";
         return newScript;
     }
 }
